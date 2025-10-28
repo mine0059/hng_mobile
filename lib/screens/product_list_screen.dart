@@ -1,14 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:hng_mobile/core/extensions/format_to_mb.dart';
 import 'package:hng_mobile/infrastructure/image_upload_controller.dart';
 import 'package:hng_mobile/screens/add_product_screen.dart';
-import 'package:lorem_ipsum/lorem_ipsum.dart';
-
 import '../core/constants/app_color.dart';
-import '../core/widgets/image_previewer.dart';
 import '../main.dart';
 import '../utils/sql_helper.dart';
 
@@ -21,33 +16,12 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   late Future<List<ProductModel>> _productFuture;
-
-  File? selectedFile;
   Completer? completer;
-  String? fileName;
-  int? fileSize;
 
   @override
   void initState() {
     super.initState();
     _productFuture = shoppingHelper!.getProducts();
-  }
-
-  void setFile(File? pickedFile) {
-    setState(() {
-      selectedFile = pickedFile;
-      if (pickedFile != null) {
-        fileName = pickedFile.path.split('/').last;
-        fileSize = pickedFile.lengthSync().formatToMegaByte();
-      }
-    });
-  }
-
-  void removeFile() {
-    setState(() {
-      selectedFile = null;
-      fileSize = null;
-    });
   }
 
   Future<void> _refreshProducts() async {
@@ -73,160 +47,84 @@ class _ProductListScreenState extends State<ProductListScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 20,
-          ),
-          child: StatefulBuilder(
-            builder: (context, setModalState) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 20,
+              right: 20,
+              top: 20,
+            ),
+            child: StatefulBuilder(builder: (context, setModalState) {
               return SingleChildScrollView(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+                    Container(
+                      width: 60,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(5),
                       ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'Edit Product',
                       style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 16),
-
-                    // Image section
+                    const SizedBox(height: 20),
                     GestureDetector(
                       onTap: () async {
                         ImageUploadController.showFilePickerButtomSheet(
-                            context, completer, setFile);
-                        // ImageUploadController.showFilePickerButtomSheet(
-                        //   context,
-                        //   null,
-                        //   (pickedFile) {
-                        //     setModalState(() {
-                        //       selectedFile = pickedFile;
-                        //     });
-                        //   },
-                        // );
+                            context, completer, (pickedFile) {
+                          setModalState(() {
+                            selectedFile = pickedFile;
+                          });
+                        });
                       },
                       child: selectedFile != null
-                          // ? ClipRRect(
-                          //     borderRadius: BorderRadius.circular(8),
-                          //     child: Image.file(
-                          //       selectedFile!,
-                          //       height: 120,
-                          //       width: double.infinity,
-                          //       fit: BoxFit.cover,
-                          //     ),
-                          //   )
-                          ? ImagePreviewer(
-                              size: MediaQuery.sizeOf(context),
-                              pickedFile: selectedFile,
-                              removeFile: () {
-                                setModalState(() {
-                                  selectedFile = null;
-                                });
-                              },
-                              context: context,
-                              completer: completer,
-                              setFile: (pickedFile) {
-                                setModalState(() {
-                                  selectedFile = pickedFile;
-                                });
-                              },
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                selectedFile!,
+                                height: 140,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
                             )
                           : Container(
-                              height: 120,
-                              width: double.infinity,
+                              height: 140,
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(12),
                                 color: Colors.grey[100],
+                                border: Border.all(color: Colors.grey.shade300),
                               ),
                               child: const Center(
-                                child: Text('Tap to select image'),
-                              ),
+                                  child: Text('Tap to select image')),
                             ),
                     ),
-
-                    const SizedBox(height: 16),
-                    const Text('Product Name'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: nameController,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(7)),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text('Description'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: descController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(7)),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
+                    _buildInputField('Product Name', nameController),
+                    _buildInputField('Description', descController,
+                        maxLines: 3),
                     Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Price'),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: priceController,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(7)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
+                            child: _buildInputField('Price', priceController,
+                                isNumber: true)),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Quantity'),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: quantityController,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(7)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                            child: _buildInputField(
+                                'Quantity', quantityController,
+                                isNumber: true)),
                       ],
                     ),
-                    const SizedBox(height: 20),
-
-                    // Update button
+                    const SizedBox(height: 25),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -245,7 +143,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           );
 
                           await shoppingHelper?.updateProduct(updatedProduct);
-
                           if (context.mounted) {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -259,202 +156,157 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryColor,
                           foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                        child: const Text('Update Product'),
+                        child: const Text('Update Product',
+                            style: TextStyle(fontSize: 16)),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20), // add bottom breathing space
                   ],
                 ),
               );
-            },
+            }),
           ),
         );
       },
     );
   }
 
+  Widget _buildInputField(String label, TextEditingController controller,
+      {int maxLines = 1, bool isNumber = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF9F9F9),
       appBar: AppBar(
-        title: const Text('Store Management App'),
-        actions: [
-          IconButton(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddProductScreen(),
-                  ),
-                );
-                _refreshProducts();
-              },
-              icon: const Icon(Icons.add))
-        ],
+        title: const Text('My Store'),
+        elevation: 0,
+        backgroundColor: AppColors.primaryColor,
+        centerTitle: true,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddProductScreen()),
+          );
+          _refreshProducts();
+        },
+        backgroundColor: AppColors.primaryColor,
+        label: const Text('Add Product'),
+        icon: const Icon(Icons.add),
       ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refreshProducts,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Product',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text(
-                    'List',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10.0, bottom: 20.0),
-                    child: Text(loremIpsum(paragraphs: 1, words: 10)),
-                  ),
-                  FutureBuilder(
-                      future: shoppingHelper?.getProducts(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const CircularProgressIndicator();
-                        } else if (snapshot.data!.isEmpty) {
-                          return const Center(
-                            child: Text('No products available.'),
-                          );
-                        } else {
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              children: [
-                                for (var product in snapshot.data!)
-                                  ListTile(
-                                    leading: product.imagePath != null
-                                        ? Container(
-                                            width: 55,
-                                            height: 55,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[200],
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              child: Image.file(
-                                                File(product.imagePath!),
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                          )
-                                        : Container(
-                                            width: 55,
-                                            height: 55,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[200],
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: const Icon(
-                                                Icons.image_not_supported,
-                                                color: Colors.grey),
-                                          ),
-                                    title: Text(product.title ?? 'No Title'),
-                                    subtitle: Text(product.description ??
-                                        'No Description'),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              '\$${product.price?.toStringAsFixed(2) ?? '0.00'}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.w600),
-                                            ),
-                                            Text(
-                                              'Qty: ${product.quantity?.toStringAsFixed(0) ?? '0'}',
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey),
-                                            ),
-                                          ],
-                                        ),
-                                        PopupMenuButton(
-                                          icon: const Icon(Icons.more_vert),
-                                          color: Colors.white,
-                                          iconSize: 25,
-                                          offset: const Offset(0,
-                                              53), // This moves the menu down
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                                12), // Rounded corners
-                                          ),
-                                          onSelected: (value) {
-                                            if (value == 'edit-product') {
-                                              _showEditProductSheet(product);
-                                            } else if (value ==
-                                                'delete-product') {
-                                              shoppingHelper
-                                                  ?.deleteProduct(product.id!);
-                                              setState(() {});
-                                            }
-                                          },
-                                          itemBuilder: (context) => [
-                                            const PopupMenuItem(
-                                              value: 'edit-product',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.edit,
-                                                      color: Colors.black),
-                                                  SizedBox(width: 10),
-                                                  Text('Edit Product'),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem(
-                                              value: 'delete-product',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.delete,
-                                                      color: Colors.red),
-                                                  SizedBox(width: 10),
-                                                  Text('Delete Product',
-                                                      style: TextStyle(
-                                                          color: Colors.red)),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+        child: FutureBuilder(
+          future: _productFuture,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final products = snapshot.data!;
+            if (products.isEmpty) {
+              return const Center(child: Text('No products yet.'));
+            }
+            return RefreshIndicator(
+              onRefresh: _refreshProducts,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    elevation: 2,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(12),
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: product.imagePath != null
+                            ? Image.file(File(product.imagePath!),
+                                width: 60, height: 60, fit: BoxFit.cover)
+                            : Container(
+                                width: 60,
+                                height: 60,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.image_not_supported,
+                                    color: Colors.grey),
+                              ),
+                      ),
+                      title: Text(
+                        product.title ?? 'No Title',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      subtitle: Text(
+                        product.description ?? 'No description',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                              '\$${product.price?.toStringAsFixed(2) ?? '0.00'}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          Text('Qty: ${product.quantity?.toInt() ?? 0}',
+                              style: const TextStyle(color: Colors.grey)),
+                          Flexible(
+                            child: PopupMenuButton(
+                              icon: const Icon(Icons.more_vert),
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: const Text('Edit'),
+                                  onTap: () =>
+                                      Future.delayed(Duration.zero, () {
+                                    _showEditProductSheet(product);
+                                  }),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: const Text('Delete',
+                                      style: TextStyle(color: Colors.red)),
+                                  onTap: () async {
+                                    await shoppingHelper
+                                        ?.deleteProduct(product.id!);
+                                    _refreshProducts();
+                                  },
+                                ),
                               ],
                             ),
-                          );
-                        }
-                      })
-                ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
