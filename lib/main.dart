@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hng_mobile/blocs/switch_bloc/switch_bloc.dart';
 import 'package:hng_mobile/screens/home_screen.dart';
@@ -16,6 +17,22 @@ ShoppingHelper? shoppingHelper;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    // Status bar (top)
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light, // Dark icons
+    statusBarBrightness: Brightness.dark, // iOS
+
+    // Navigation bar (bottom)
+    systemNavigationBarColor: Colors.white, // Match your bottom nav
+    systemNavigationBarIconBrightness: Brightness.dark, // Dark icons
+    systemNavigationBarDividerColor: Colors.transparent,
+  ));
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+  );
 
   shoppingHelper = ShoppingHelper();
   String databasePath = await getDatabasesPath();
