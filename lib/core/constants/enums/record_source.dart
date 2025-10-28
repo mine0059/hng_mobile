@@ -1,0 +1,4 @@
+enum RecordSource {
+  camera,
+  gallery,
+}
